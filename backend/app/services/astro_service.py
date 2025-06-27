@@ -15,34 +15,36 @@ class AstroService:
         Note: This is a mock implementation. Replace with actual Astro API calls.
         """
         try:
-            # Mock data for development - replace with actual API call
-            if not self.api_key:
+            # Use mock data if no API key is provided
+            if not self.api_key or self.api_key == "YOUR_ACTUAL_API_KEY_HERE":
+                print("Using mock astrology data - add real API key to use actual astrology service")
                 return self._get_mock_chart_data(birth_data)
             
-            # Real API call would look like this:
-            # payload = {
-            #     "day": int(birth_data.birth_date.split("-")[2]),
-            #     "month": int(birth_data.birth_date.split("-")[1]),
-            #     "year": int(birth_data.birth_date.split("-")[0]),
-            #     "hour": int(birth_data.birth_time.split(":")[0]),
-            #     "min": int(birth_data.birth_time.split(":")[1]),
-            #     "lat": birth_data.latitude,
-            #     "lon": birth_data.longitude,
-            #     "tzone": birth_data.timezone
-            # }
-            # 
-            # headers = {
-            #     "Authorization": f"Bearer {self.api_key}",
-            #     "Content-Type": "application/json"
-            # }
-            # 
-            # response = requests.post(f"{self.base_url}/horoscope", 
-            #                         json=payload, headers=headers)
-            # 
-            # if response.status_code == 200:
-            #     return self._parse_api_response(response.json())
+            # Real API call to AstroAPI.com
+            payload = {
+                "birth_date": birth_data.birth_date,
+                "birth_time": birth_data.birth_time,
+                "latitude": birth_data.latitude,
+                "longitude": birth_data.longitude,
+                "timezone": birth_data.timezone,
+                "name": birth_data.name
+            }
             
-            return self._get_mock_chart_data(birth_data)
+            headers = {
+                "X-API-Key": self.api_key,
+                "Content-Type": "application/json"
+            }
+            
+            print(f"Making API call to {self.base_url}/birth-chart")
+            response = requests.post(f"{self.base_url}/birth-chart", 
+                                   json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                return self._parse_api_response(response.json())
+            else:
+                print(f"API call failed with status {response.status_code}: {response.text}")
+                print("Falling back to mock data")
+                return self._get_mock_chart_data(birth_data)
             
         except Exception as e:
             print(f"Error getting birth chart: {e}")
@@ -87,7 +89,51 @@ class AstroService:
     
     def _parse_api_response(self, response_data: Dict) -> AstroResponse:
         """Parse actual API response into our schema"""
-        # This would parse the real API response
-        pass
+        try:
+            # This is a generic parser - you'll need to adapt this based on your actual API response format
+            # Each astrology API has a different response structure
+            
+            # Extract basic chart information
+            sun_sign = response_data.get('sun_sign', 'Leo')
+            moon_sign = response_data.get('moon_sign', 'Scorpio') 
+            rising_sign = response_data.get('ascendant', 'Cancer')
+            
+            # Parse planets data
+            planets = []
+            planets_data = response_data.get('planets', {})
+            for planet_name, planet_info in planets_data.items():
+                planet = PlanetPosition(
+                    name=planet_name,
+                    sign=planet_info.get('sign', 'Aries'),
+                    degree=float(planet_info.get('degree', 0)),
+                    house=int(planet_info.get('house', 1)),
+                    retrograde=planet_info.get('retrograde', False)
+                )
+                planets.append(planet)
+            
+            # Parse houses
+            houses = response_data.get('houses', {})
+            
+            # Parse aspects
+            aspects = response_data.get('aspects', [])
+            
+            birth_chart = BirthChart(
+                sun_sign=sun_sign,
+                moon_sign=moon_sign,
+                rising_sign=rising_sign,
+                planets=planets,
+                houses=houses,
+                aspects=aspects
+            )
+            
+            return AstroResponse(
+                birth_chart=birth_chart,
+                raw_data=response_data
+            )
+            
+        except Exception as e:
+            print(f"Error parsing API response: {e}")
+            # Fall back to mock data if parsing fails
+            return self._get_mock_chart_data(None)
 
 astro_service = AstroService()
