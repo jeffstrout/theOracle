@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union
 
 class BirthDataRequest(BaseModel):
     name: str
@@ -24,7 +24,7 @@ class BirthChart(BaseModel):
     rising_sign: str
     planets: List[PlanetPosition]
     houses: Dict[str, str]
-    aspects: List[Dict[str, str]]
+    aspects: List[Dict[str, Union[str, float]]]
 
 class AstroResponse(BaseModel):
     birth_chart: BirthChart

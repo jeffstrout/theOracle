@@ -18,7 +18,7 @@ async def generate_full_assessment(birth_data: BirthDataRequest):
             raise HTTPException(status_code=400, detail="Unable to get astrological data")
         
         # Generate all personality assessments
-        assessment = personality_engine.generate_all_assessments(astro_data.birth_chart)
+        assessment = await personality_engine.generate_all_assessments(astro_data.birth_chart)
         assessment.user_id = f"user_{birth_data.name.replace(' ', '_').lower()}"
         
         return assessment
@@ -38,7 +38,7 @@ async def generate_single_assessment(test_type: PersonalityTestType, birth_data:
             raise HTTPException(status_code=400, detail="Unable to get astrological data")
         
         # Generate full assessment first
-        full_assessment = personality_engine.generate_all_assessments(astro_data.birth_chart)
+        full_assessment = await personality_engine.generate_all_assessments(astro_data.birth_chart)
         
         # Return specific test result
         test_result = getattr(full_assessment, test_type.value)

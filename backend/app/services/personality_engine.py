@@ -1,6 +1,7 @@
 from typing import Dict, List
 from app.schemas.astro import BirthChart
 from app.schemas.personality import *
+from app.services.llm_service import llm_service
 
 class PersonalityEngine:
     """
@@ -11,11 +12,19 @@ class PersonalityEngine:
         self.sign_traits = self._init_sign_traits()
         self.planet_influences = self._init_planet_influences()
     
-    def generate_all_assessments(self, birth_chart: BirthChart) -> PersonalityAssessment:
+    async def generate_all_assessments(self, birth_chart: BirthChart) -> PersonalityAssessment:
         """Generate all 9 personality assessments from birth chart data"""
         
+        # Try LLM-powered assessment first
+        llm_assessment = llm_service.generate_personality_assessment(birth_chart)
+        if llm_assessment:
+            print("✅ Successfully generated LLM-powered personality assessment")
+            return llm_assessment
+        
+        # Fall back to rule-based system
+        print("⚠️ LLM unavailable, using rule-based personality assessment")
         return PersonalityAssessment(
-            user_id="temp_user",  # Replace with actual user ID
+            user_id="rule_based_user",
             birth_data=birth_chart.dict(),
             mbti=self._generate_mbti(birth_chart),
             big_five=self._generate_big_five(birth_chart),
@@ -27,7 +36,7 @@ class PersonalityEngine:
             emotional_intelligence=self._generate_emotional_intelligence(birth_chart),
             career_personality=self._generate_career_personality(birth_chart),
             created_at="2024-01-01T00:00:00Z",
-            confidence_score=0.85
+            confidence_score=0.75  # Lower confidence for rule-based
         )
     
     def _generate_mbti(self, chart: BirthChart) -> MBTIResult:

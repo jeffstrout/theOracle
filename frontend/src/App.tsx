@@ -10,17 +10,26 @@ function App() {
   const [assessment, setAssessment] = useState<PersonalityAssessment | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [astroData, setAstroData] = useState<any>(null);
+  const [showDialog, setShowDialog] = useState(false);
 
   const handleFormSubmit = async (birthData: BirthData) => {
     setLoading(true);
     setError(null);
 
     try {
+      // Instead of getting full assessment, just fetch astrological data
       const result = await personalityApi.getFullAssessment(birthData);
+      
+      // For now, display the raw data in a dialog
+      setAstroData(result);
+      setShowDialog(true);
+      
+      // Still set assessment for the existing flow
       setAssessment(result);
     } catch (err) {
-      setError('Failed to generate assessment. Please check your birth data and try again.');
-      console.error('Assessment error:', err);
+      setError('Failed to fetch astrological data. Please check your birth data and try again.');
+      console.error('Astro data error:', err);
     } finally {
       setLoading(false);
     }
@@ -29,6 +38,12 @@ function App() {
   const handleReset = () => {
     setAssessment(null);
     setError(null);
+    setAstroData(null);
+    setShowDialog(false);
+  };
+
+  const closeDialog = () => {
+    setShowDialog(false);
   };
 
   return (
@@ -53,16 +68,13 @@ function App() {
             <div className="app-info">
               <h3>What You'll Receive:</h3>
               <ul>
-                <li><strong>Myers-Briggs (MBTI)</strong> - Your 4-letter personality type</li>
-                <li><strong>Big Five (OCEAN)</strong> - Core personality dimensions</li>
-                <li><strong>Enneagram</strong> - Your core motivation and fears</li>
-                <li><strong>DISC Assessment</strong> - Behavioral communication style</li>
-                <li><strong>StrengthsFinder</strong> - Your top 5 natural talents</li>
-                <li><strong>Love Languages</strong> - How you give and receive love</li>
-                <li><strong>Attachment Style</strong> - Your relationship patterns</li>
-                <li><strong>Emotional Intelligence</strong> - EQ breakdown and insights</li>
-                <li><strong>Career Personality</strong> - Holland Code career matching</li>
+                <li><strong>Birth Chart Data</strong> - Complete astrological profile</li>
+                <li><strong>Planetary Positions</strong> - Sun, Moon, Rising and all planets</li>
+                <li><strong>House Placements</strong> - 12 houses and their meanings</li>
+                <li><strong>Astrological Aspects</strong> - Planetary relationships</li>
+                <li><strong>Raw API Response</strong> - Full data for LLM processing</li>
               </ul>
+              <p><em>Future: This data will be processed by an LLM to generate 9 personality assessments including MBTI, Big Five, Enneagram, and more.</em></p>
             </div>
           </div>
         ) : (
@@ -70,8 +82,34 @@ function App() {
             <AssessmentResults assessment={assessment} />
             <div className="reset-container">
               <button onClick={handleReset} className="reset-button">
-                Generate New Assessment
+                Get New Astrological Data
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Astrological Data Dialog */}
+        {showDialog && astroData && (
+          <div className="dialog-overlay" onClick={closeDialog}>
+            <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
+              <div className="dialog-header">
+                <h3>🌟 Your Astrological Data</h3>
+                <button className="close-button" onClick={closeDialog}>×</button>
+              </div>
+              <div className="dialog-body">
+                <p><strong>Data Source:</strong> Multi-provider astrology APIs</p>
+                <p><em>This raw data will be used by an LLM to generate your personality assessments.</em></p>
+                
+                <div className="astro-data-display">
+                  <h4>Raw API Response:</h4>
+                  <pre className="json-display">
+                    {JSON.stringify(astroData, null, 2)}
+                  </pre>
+                </div>
+              </div>
+              <div className="dialog-footer">
+                <button onClick={closeDialog} className="dialog-button">Close</button>
+              </div>
             </div>
           </div>
         )}

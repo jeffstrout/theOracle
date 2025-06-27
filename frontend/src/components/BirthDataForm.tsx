@@ -19,20 +19,20 @@ const BirthDataForm: React.FC<BirthDataFormProps> = ({ onSubmit, loading }) => {
   const [coordinatesFound, setCoordinatesFound] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const [suggestions, setSuggestions] = useState<Array<{name: string, lat: number, lng: number, timezone: string}>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const handleSuggestionSelect = (selectedName: string) => {
-    const suggestion = suggestions.find(s => s.name === selectedName);
-    if (suggestion) {
-      setFormData(prev => ({
-        ...prev,
-        birth_place: suggestion.name,
-        latitude: suggestion.lat,
-        longitude: suggestion.lng,
-        timezone: suggestion.timezone
-      }));
-      setCoordinatesFound(true);
-      console.log(`Selected suggestion: ${suggestion.name}`);
-    }
+  const handleSuggestionSelect = (suggestion: {name: string, lat: number, lng: number, timezone: string}) => {
+    setFormData(prev => ({
+      ...prev,
+      birth_place: suggestion.name,
+      latitude: suggestion.lat,
+      longitude: suggestion.lng,
+      timezone: suggestion.timezone
+    }));
+    setCoordinatesFound(true);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    console.log(`Selected suggestion: ${suggestion.name}`);
   };
 
   // Function to get timezone from coordinates
@@ -135,16 +135,34 @@ const BirthDataForm: React.FC<BirthDataFormProps> = ({ onSubmit, loading }) => {
       // Check if the entered value matches a suggestion exactly
       const matchingSuggestion = suggestions.find(s => s.name === value);
       if (matchingSuggestion) {
-        handleSuggestionSelect(value);
+        console.log(`Found exact match for: ${value}`);
+        handleSuggestionSelect(matchingSuggestion);
       } else if (value.length > 2) {
         // Debounce the search to avoid too many calls
+        console.log(`Searching for: ${value}`);
         const timeout = setTimeout(async () => await handleLocationSearch(value), 500);
         setSearchTimeout(timeout);
       } else {
         setCoordinatesFound(false);
         setSuggestions([]);
+        setShowSuggestions(false);
       }
     }
+  };
+
+  // Handle input focus to show suggestions
+  const handleFocus = () => {
+    if (suggestions.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
+  // Handle input blur to hide suggestions (with delay)
+  const handleBlur = () => {
+    // Delay hiding to allow for clicks on suggestions
+    setTimeout(() => {
+      setShowSuggestions(false);
+    }, 200);
   };
 
   const handleLocationSearch = async (place: string) => {
@@ -266,6 +284,8 @@ const BirthDataForm: React.FC<BirthDataFormProps> = ({ onSubmit, loading }) => {
 
     // Update suggestions
     setSuggestions(allSuggestions);
+    setShowSuggestions(allSuggestions.length > 0);
+    console.log(`Found ${allSuggestions.length} suggestions:`, allSuggestions.map(s => s.name));
     
     // If only one suggestion and it's an exact match, auto-select it
     if (allSuggestions.length === 1 && allSuggestions[0].name.toLowerCase() === normalizedPlace) {
@@ -277,6 +297,7 @@ const BirthDataForm: React.FC<BirthDataFormProps> = ({ onSubmit, loading }) => {
         timezone: coords.timezone
       }));
       setCoordinatesFound(true);
+      setShowSuggestions(false);
       console.log(`Auto-selected exact match: ${coords.name}`);
     } else {
       setCoordinatesFound(false);
@@ -327,7 +348,7 @@ const BirthDataForm: React.FC<BirthDataFormProps> = ({ onSubmit, loading }) => {
           <small>Enter the exact time you were born (as accurate as possible)</small>
         </div>
 
-        <div className="form-group">
+        <div className="form-group" style={{position: 'relative'}}>
           <label htmlFor="birth_place">Birth Place:</label>
           <input
             type="text"
@@ -335,20 +356,33 @@ const BirthDataForm: React.FC<BirthDataFormProps> = ({ onSubmit, loading }) => {
             name="birth_place"
             value={formData.birth_place}
             onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             required
             placeholder="Any city worldwide (e.g., New York, Paris, Mumbai, etc.)"
             autoComplete="off"
-            list="location-suggestions"
           />
-          <datalist id="location-suggestions">
-            {suggestions.map((suggestion, index) => (
-              <option key={index} value={suggestion.name}>
-                {suggestion.lat.toFixed(4)}, {suggestion.lng.toFixed(4)} • {suggestion.timezone}
-              </option>
-            ))}
-          </datalist>
+          
+          {/* Custom Dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="suggestions-dropdown">
+              {suggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  className="suggestion-item"
+                  onClick={() => handleSuggestionSelect(suggestion)}
+                >
+                  <div className="suggestion-name">{suggestion.name}</div>
+                  <div className="suggestion-details">
+                    {suggestion.lat.toFixed(4)}, {suggestion.lng.toFixed(4)} • {suggestion.timezone}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
           <small>
-            Type any city name worldwide - select from combo box suggestions
+            Type any city name worldwide - select from dropdown suggestions
             {coordinatesFound && <span style={{color: 'green', fontWeight: 'bold'}}> ✓ Coordinates found!</span>}
             <br />
             <strong>Works with any city:</strong> New York, London, Tokyo, Mumbai, São Paulo, etc.
@@ -424,7 +458,7 @@ const BirthDataForm: React.FC<BirthDataFormProps> = ({ onSubmit, loading }) => {
         </div>
 
         <button type="submit" disabled={loading} className="submit-button">
-          {loading ? 'Generating Assessment...' : 'Generate My Personality Profile'}
+          {loading ? 'Fetching Astrological Data...' : 'Get My Astrological Data'}
         </button>
       </form>
 

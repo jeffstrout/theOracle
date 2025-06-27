@@ -3,6 +3,7 @@ import json
 from typing import Dict, Optional
 from app.core.config import settings
 from app.schemas.astro import BirthDataRequest, AstroResponse, BirthChart, PlanetPosition
+from app.services.prokerala_service import prokerala_service
 
 class AstroService:
     def __init__(self):
@@ -11,14 +12,39 @@ class AstroService:
         
     async def get_birth_chart(self, birth_data: BirthDataRequest) -> Optional[AstroResponse]:
         """
-        Get birth chart data from Astro API
-        Note: This is a mock implementation. Replace with actual Astro API calls.
+        Get birth chart data using multi-provider fallback system:
+        1. Primary API (AstroAPI.com)
+        2. Secondary API (Prokerala)
+        3. Mock data
+        """
+        print("Starting multi-provider astrology data fetch...")
+        
+        # Try primary provider first (AstroAPI.com)
+        primary_result = await self._try_primary_api(birth_data)
+        if primary_result:
+            print("Successfully retrieved data from primary API (AstroAPI.com)")
+            return primary_result
+        
+        # Try secondary provider (Prokerala)
+        print("Primary API failed, trying secondary provider (Prokerala)...")
+        secondary_result = await self._try_secondary_api(birth_data)
+        if secondary_result:
+            print("Successfully retrieved data from secondary API (Prokerala)")
+            return secondary_result
+        
+        # Fall back to mock data
+        print("All API providers failed, falling back to mock data")
+        return self._get_mock_chart_data(birth_data)
+    
+    async def _try_primary_api(self, birth_data: BirthDataRequest) -> Optional[AstroResponse]:
+        """
+        Try to get data from primary API (AstroAPI.com)
         """
         try:
-            # Use mock data if no API key is provided
+            # Check if primary API key is configured
             if not self.api_key or self.api_key == "YOUR_ACTUAL_API_KEY_HERE":
-                print("Using mock astrology data - add real API key to use actual astrology service")
-                return self._get_mock_chart_data(birth_data)
+                print("Primary API (AstroAPI.com) key not configured")
+                return None
             
             # Real API call to AstroAPI.com
             payload = {
@@ -35,19 +61,28 @@ class AstroService:
                 "Content-Type": "application/json"
             }
             
-            print(f"Making API call to {self.base_url}/birth-chart")
+            print(f"Making primary API call to {self.base_url}/birth-chart")
             response = requests.post(f"{self.base_url}/birth-chart", 
                                    json=payload, headers=headers)
             
             if response.status_code == 200:
                 return self._parse_api_response(response.json())
             else:
-                print(f"API call failed with status {response.status_code}: {response.text}")
-                print("Falling back to mock data")
-                return self._get_mock_chart_data(birth_data)
+                print(f"Primary API call failed with status {response.status_code}: {response.text}")
+                return None
             
         except Exception as e:
-            print(f"Error getting birth chart: {e}")
+            print(f"Error calling primary API: {e}")
+            return None
+    
+    async def _try_secondary_api(self, birth_data: BirthDataRequest) -> Optional[AstroResponse]:
+        """
+        Try to get data from secondary API (Prokerala)
+        """
+        try:
+            return await prokerala_service.get_birth_chart(birth_data)
+        except Exception as e:
+            print(f"Error calling secondary API: {e}")
             return None
     
     def _get_mock_chart_data(self, birth_data: BirthDataRequest) -> AstroResponse:
