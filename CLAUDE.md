@@ -180,6 +180,32 @@ npm run test:watch  # Watch mode
 npm run test:coverage  # Coverage report
 ```
 
+## Location Search Features
+
+### Birth Place Input with Combo Box
+The birth place form field includes an intelligent location search system:
+
+- **HTML Datalist Combo Box**: Uses native `<datalist>` element for suggestions
+- **Real-time Search**: Suggestions appear after typing 3+ characters (debounced 500ms)
+- **Dual Data Sources**:
+  - **Quick Cities**: Hardcoded list of 50+ major worldwide cities for instant matching
+  - **Geocoding API**: OpenStreetMap Nominatim for comprehensive global coverage
+- **Auto-population**: Selecting a suggestion automatically fills latitude, longitude, and timezone
+- **Smart Matching**: Supports partial matches and multiple name variations
+- **Timezone Detection**: Two-tier system with city-specific mappings and geographic estimation
+
+### Location Data Flow
+1. User types location name (3+ characters)
+2. Quick lookup in hardcoded cities first (fastest)
+3. If insufficient matches, query OpenStreetMap Nominatim API
+4. Display up to 5 suggestions in combo box with coordinates and timezone
+5. User selects suggestion to auto-populate all location fields
+
+### Supported Cities
+- **US Cities**: New York, Los Angeles, Chicago, Houston, Phoenix, etc.
+- **International**: London, Paris, Tokyo, Mumbai, São Paulo, etc.
+- **Global Coverage**: Any location via OpenStreetMap geocoding
+
 ## Development Notes
 
 - **Astro API**: Handle rate limits and API failures gracefully
@@ -188,3 +214,4 @@ npm run test:coverage  # Coverage report
 - **Mobile UX**: Optimize forms and results display for mobile devices
 - **Caching**: Cache Astro API responses to reduce API calls
 - **Error Handling**: Provide meaningful error messages for invalid birth data
+- **Location Search**: Combo box provides intuitive location selection with global coverage

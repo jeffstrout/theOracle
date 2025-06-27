@@ -6,8 +6,6 @@ interface AssessmentResultsProps {
 }
 
 const AssessmentResults: React.FC<AssessmentResultsProps> = ({ assessment }) => {
-  const formatPercentage = (value: number) => `${value}%`;
-
   return (
     <div className="assessment-results">
       <div className="results-header">
@@ -200,7 +198,7 @@ const AssessmentResults: React.FC<AssessmentResultsProps> = ({ assessment }) => 
               {assessment.strengths_finder.top_strengths.map((strength, index) => (
                 <div key={index} className="strength-item">
                   <h4>#{index + 1} {strength}</h4>
-                  <p>{assessment.strengths_finder.descriptions[strength]}</p>
+                  <p>{assessment.strengths_finder?.descriptions[strength]}</p>
                 </div>
               ))}
             </div>

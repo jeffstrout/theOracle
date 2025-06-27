@@ -79,6 +79,31 @@ The Oracle combines astrological insights with modern personality psychology to 
    - Backend API: http://localhost:8000
    - API Documentation: http://localhost:8000/docs
 
+## ✨ Features
+
+### 🌍 Intelligent Location Search
+The birth place input includes a sophisticated location search system:
+
+- **Native Combo Box**: HTML `<datalist>` element provides familiar dropdown experience
+- **Global Coverage**: Search any city worldwide with instant suggestions
+- **Dual Data Sources**:
+  - Quick lookup for 50+ major cities (New York, London, Tokyo, Mumbai, etc.)
+  - OpenStreetMap Nominatim API for comprehensive global geocoding
+- **Smart Auto-completion**: Automatically populates latitude, longitude, and timezone
+- **Real-time Search**: Debounced suggestions appear after typing 3+ characters
+
+### 🔮 Personality Assessments
+Generate comprehensive results for 9 popular personality tests:
+- Myers-Briggs Type Indicator (MBTI)
+- Big Five Personality Traits (OCEAN)
+- Enneagram with wings and variants
+- DISC Assessment
+- StrengthsFinder Top 5
+- Love Languages
+- Attachment Styles
+- Emotional Intelligence (EQ)
+- Career Personality (Holland Code)
+
 ## 📱 Mobile Development
 
 ### Progressive Web App (PWA)
